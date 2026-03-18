@@ -1,0 +1,5 @@
+# i want to ignore the venv folder
+venv
+.venv
+test.jpeg
+
