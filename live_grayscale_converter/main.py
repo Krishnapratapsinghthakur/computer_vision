@@ -15,7 +15,7 @@ while True:
     gray_frame=cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     cv2.imshow("Original", frame)
     cv2.imshow("Grayscale", gray_frame)
-    if cv2.waitKey(100) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
