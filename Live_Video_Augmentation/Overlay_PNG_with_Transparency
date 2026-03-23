@@ -1,0 +1,65 @@
+import cv2
+import numpy as np
+
+def overlay_png(background, overlay, x, y):
+    """Overlay a PNG image with transparency onto background at (x,y)"""
+
+    # Get overlay dimensions
+    h, w = overlay.shape[:2]
+
+    # Make sure we don't go outside frame boundaries
+    if x + w > background.shape[1]: w = background.shape[1] - x
+    if y + h > background.shape[0]: h = background.shape[0] - y
+    if x < 0 or y < 0 or w <= 0 or h <= 0:
+        return background
+
+    # Crop overlay to fit
+    overlay = overlay[:h, :w]
+
+    # Split into color and alpha channels
+    if overlay.shape[2] == 4:
+        overlay_color = overlay[:, :, :3]   # BGR channels
+        alpha         = overlay[:, :, 3]    # Alpha channel
+    else:
+        overlay_color = overlay
+        alpha         = np.ones((h, w), dtype=np.uint8) * 255
+
+    # Normalize alpha to 0.0 - 1.0
+    alpha_float = alpha.astype(float) / 255.0
+
+    # Get background region
+    bg_region = background[y:y+h, x:x+w].astype(float)
+
+    # Blend: output = overlay * alpha + background * (1 - alpha)
+    for c in range(3):
+        bg_region[:, :, c] = (
+            overlay_color[:, :, c] * alpha_float +
+            bg_region[:, :, c] * (1.0 - alpha_float)
+        )
+
+    background[y:y+h, x:x+w] = bg_region.astype(np.uint8)
+    return background
+
+
+# ── Main ──────────────────────────────────────
+cap = cv2.VideoCapture(0)
+
+# Load a PNG with transparency (download any PNG with transparent bg)
+overlay_img = cv2.imread('overlay.png', cv2.IMREAD_UNCHANGED)
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    # Overlay the PNG at position (50, 50)
+    if overlay_img is not None:
+        frame = overlay_png(frame, overlay_img, 50, 50)
+
+    cv2.imshow('Augmented', frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
